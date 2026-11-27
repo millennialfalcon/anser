@@ -11,6 +11,7 @@ dependencies = [
     { name = "astroquery" },
     { name = "duckdb" },
     { name = "pyarrow" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
@@ -24,6 +25,7 @@ requires-dist = [
     { name = "astroquery", specifier = ">=0.4.11" },
     { name = "duckdb", specifier = ">=2.0.1" },
     { name = "pyarrow", specifier = ">=26.0.1" },
+    { name = "requests", specifier = ">=2.34.2" },
 ]
 
 [package.metadata.requires-dev]

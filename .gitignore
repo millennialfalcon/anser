@@ -1,6 +1,7 @@
 .env
 .pytest_cache/
-.venv/
+.venv
+.venv.nosync/
 __pycache__/
 CLAUDE.md
 data/cache/

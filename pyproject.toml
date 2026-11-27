@@ -12,6 +12,7 @@ dependencies = [
     "astroquery>=0.4.11",
     "duckdb>=2.0.1",
     "pyarrow>=26.0.1",
+    "requests>=2.34.2",
 ]
 license = "MIT"
 license-files = ["LICENSE"] 
