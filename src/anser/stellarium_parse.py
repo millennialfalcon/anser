@@ -22,3 +22,28 @@ def figure_edges(lines) -> list[tuple[str,str]]:
             else: 
                 raise ValueError(f"{i} identified as sharing an edge with itself")
     return sorted(edges)
+
+def parse_sky_culture(data:dict) -> list[dict]: 
+    sky_culture = data["id"]
+    rows = []
+    
+    for kind, patterns in [("asterism", data["asterisms"]), ("constellation", data["constellations"])]: 
+        for pattern in patterns: 
+            if pattern.get("is_ray_helper") is not None: 
+                continue 
+            figure_id = pattern["id"]
+            try: 
+                edges = figure_edges(pattern["lines"])
+            except ValueError as e: 
+                raise ValueError(f"{pattern['id']}: {e}") from e
+            for i, j in edges: 
+                rows.append(
+                    {
+                        "sky_culture" : sky_culture,
+                        "kind" : kind, 
+                        "figure_id" : figure_id, 
+                        "star_a" : i, 
+                        "star_b" : j
+                    }
+                )
+    return rows
