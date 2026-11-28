@@ -192,3 +192,45 @@ def test_real_file_kembles_cascade_is_all_gaia(real_rows):
     rows = rows_for(real_rows, "AST modern TA1")
     assert rows
     assert all(r["star_a"].startswith("gaia_dr3:") and r["star_b"].startswith("gaia_dr3:") for r in rows)
+
+
+# --- write_figure_edges: rows go to a Parquet file through DuckDB ---
+
+import duckdb  # noqa: E402
+
+from anser.stellarium_parse import write_figure_edges  # noqa: E402
+
+COLUMN_ORDER = ["sky_culture", "figure_id", "kind", "star_a", "star_b"]
+
+
+def read_back(path):
+    rel = duckdb.read_parquet(str(path))
+    return rel.columns, rel.types, rel.fetchall()
+
+
+def test_written_file_has_columns_in_order(tmp_path):
+    target = write_figure_edges(parse_sky_culture(FIXTURE), tmp_path / "figure_edge.parquet")
+    columns, types, _ = read_back(target)
+    assert columns == COLUMN_ORDER
+    assert all(str(t) == "VARCHAR" for t in types)
+
+
+def test_written_file_round_trips(tmp_path):
+    rows = parse_sky_culture(FIXTURE)
+    target = write_figure_edges(rows, tmp_path / "figure_edge.parquet")
+    _, _, back = read_back(target)
+    expected = sorted(tuple(r[c] for c in COLUMN_ORDER) for r in rows)
+    assert back == expected  # same rows, and the file is sorted
+
+
+def test_write_leaves_no_partial_file(tmp_path):
+    target = write_figure_edges(parse_sky_culture(FIXTURE), tmp_path / "out" / "figure_edge.parquet")
+    assert target.exists()
+    assert list(target.parent.iterdir()) == [target]
+
+
+def test_empty_rows_still_write_the_columns(tmp_path):
+    target = write_figure_edges([], tmp_path / "figure_edge.parquet")
+    columns, _, back = read_back(target)
+    assert columns == COLUMN_ORDER
+    assert back == []

@@ -1,3 +1,11 @@
+import duckdb
+import json
+import pyarrow as pa
+from pathlib import Path 
+from anser.stellarium_fetch import fetch_index
+
+schema = pa.schema([(c, pa.string()) for c in ["sky_culture", "figure_id", "kind", "star_a", "star_b"]])
+
 def normalize_id(raw) -> str: 
     if type(raw) is str: 
         if raw.startswith("DSO:") and len(raw) > 4: 
@@ -47,3 +55,21 @@ def parse_sky_culture(data:dict) -> list[dict]:
                     }
                 )
     return rows
+
+def write_figure_edges(rows:list[dict], path:Path) -> Path: 
+    edges = pa.Table.from_pylist(rows, schema=schema)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    partial = path.with_suffix(".part")
+    duckdb.sql(f"""
+            COPY (SELECT * FROM edges ORDER BY ALL) TO '{partial}' (FORMAT parquet)
+            """)
+    partial.replace(path)
+    return path 
+
+def build() -> Path: 
+    data = json.loads(fetch_index().read_text())
+    rows = parse_sky_culture(data)
+    return write_figure_edges(rows, fetch_index().parent.parent / "figure_edge.parquet")
+
+if __name__ == "__main__": 
+    print(build())
